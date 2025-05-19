@@ -5,6 +5,11 @@ import depthai as dai
 import time
 import math
 import csv
+import pathlib
+
+pathlib.Path("oakd_lite/mav0/imu0").mkdir(parents=True, exist_ok=True)
+pathlib.Path("oakd_lite/mav0/cam0/data").mkdir(parents=True, exist_ok=True)
+pathlib.Path("oakd_lite/mav0/cam1/data").mkdir(parents=True, exist_ok=True)
 
 # Create pipeline
 pipeline = dai.Pipeline()
@@ -61,7 +66,8 @@ with dai.Device(pipeline) as device, open('oakd_lite/mav0/imu0/data.csv', 'w') a
                 for imuPacket in imuPackets:
                     acceleroValues = imuPacket.acceleroMeter
                     gyroValues = imuPacket.gyroscope
-                    imu_writer.writerow((int(acceleroValues.getTimestampDevice().total_seconds()*1e9), gyroValues.x, gyroValues.y, gyroValues.z, acceleroValues.x, acceleroValues.y, acceleroValues.z))
+                    # to ros frame, easier to understand in rviz
+                    imu_writer.writerow((int(acceleroValues.getTimestampDevice().total_seconds()*1e9), -gyroValues.z, -gyroValues.x, gyroValues.y, -acceleroValues.z, -acceleroValues.x, acceleroValues.y))
             elif queueName == "left":
                 inLeft = qLeft.get()
                 ts = int(inLeft.getTimestampDevice().total_seconds()*1e9)
