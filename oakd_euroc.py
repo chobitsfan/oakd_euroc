@@ -6,10 +6,22 @@ import time
 import math
 import csv
 import pathlib
+import numpy as np
 
 pathlib.Path("oakd_lite/mav0/imu0").mkdir(parents=True, exist_ok=True)
 pathlib.Path("oakd_lite/mav0/cam0/data").mkdir(parents=True, exist_ok=True)
 pathlib.Path("oakd_lite/mav0/cam1/data").mkdir(parents=True, exist_ok=True)
+
+fs = cv2.FileStorage("q250_imu_cali.yml", cv2.FILE_STORAGE_READ)
+acc_misalign = fs.getNode("acc_misalign").mat()
+acc_scale = fs.getNode("acc_scale").mat()
+acc_cor = acc_misalign * acc_scale
+acc_bias = fs.getNode("acc_bias").mat()
+gyro_misalign = fs.getNode("gyro_misalign").mat()
+gyro_scale = fs.getNode("gyro_scale").mat()
+gyro_cor = acc_misalign * acc_scale
+gyro_bias = fs.getNode("gyro_bias").mat()
+fs.release()
 
 # Create pipeline
 pipeline = dai.Pipeline()
@@ -66,8 +78,10 @@ with dai.Device(pipeline) as device, open('oakd_lite/mav0/imu0/data.csv', 'w') a
                 for imuPacket in imuPackets:
                     acceleroValues = imuPacket.acceleroMeter
                     gyroValues = imuPacket.gyroscope
+                    acc_cali = acc_cor @ (np.array([acceleroValues.x, acceleroValues.y, acceleroValues.z]) - acc_bias)
+                    gyro_cali = gyro_cor @ (np.array([gyroValues.x, gyroValues.y, gyroValues.z]) - gyro_bias)
                     # to ros frame, easier to understand in rviz
-                    imu_writer.writerow((int(acceleroValues.getTimestampDevice().total_seconds()*1e9), -gyroValues.z, -gyroValues.x, gyroValues.y, -acceleroValues.z, -acceleroValues.x, acceleroValues.y))
+                    imu_writer.writerow((int(acceleroValues.getTimestampDevice().total_seconds()*1e9), -gyro_cali[2, 0], -gyro_cali[0, 0], gyro_cali[1, 0], -acc_cali[2, 0], -acc_cali[0, 0], acc_cali[1, 0]))
             elif queueName == "left":
                 inLeft = qLeft.get()
                 ts = int(inLeft.getTimestampDevice().total_seconds()*1e9)
