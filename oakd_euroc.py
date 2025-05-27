@@ -80,8 +80,8 @@ with dai.Device(pipeline) as device, open('oakd_lite/mav0/imu0/data.csv', 'w') a
                     gyroValues = imuPacket.gyroscope
                     acc_cali = acc_cor @ (np.array([acceleroValues.x, acceleroValues.y, acceleroValues.z]) - acc_bias)
                     gyro_cali = gyro_cor @ (np.array([gyroValues.x, gyroValues.y, gyroValues.z]) - gyro_bias)
-                    # to ros frame, easier to understand in rviz
-                    imu_writer.writerow((int(acceleroValues.getTimestampDevice().total_seconds()*1e9), -gyro_cali[2, 0], -gyro_cali[0, 0], gyro_cali[1, 0], -acc_cali[2, 0], -acc_cali[0, 0], acc_cali[1, 0]))
+                    # align with cam axis
+                    imu_writer.writerow((int(acceleroValues.getTimestampDevice().total_seconds()*1e9), gyro_cali[0, 0], -gyro_cali[1, 0], -gyro_cali[2, 0], acc_cali[0, 0], -acc_cali[1, 0], -acc_cali[2, 0]))
             elif queueName == "left":
                 inLeft = qLeft.get()
                 ts = int(inLeft.getTimestampDevice().total_seconds()*1e9)
