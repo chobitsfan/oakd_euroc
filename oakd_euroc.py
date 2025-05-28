@@ -7,6 +7,25 @@ import math
 import csv
 import pathlib
 import numpy as np
+import threading, time
+
+gogogo = True
+l_img = None
+l_ts = 0
+r_img = None
+r_ts = 0
+
+def save_png():
+    global l_img
+    global r_img
+    while gogogo:
+        if l_img is not None:
+            cv2.imwrite(f"oakd_lite/mav0/cam0/data/{l_ts}.png", l_img)
+            l_img = None
+        if r_img is not None:
+            cv2.imwrite(f"oakd_lite/mav0/cam1/data/{r_ts}.png", r_img)
+            r_img = None
+        time.sleep(0.0001)
 
 pathlib.Path("oakd_lite/mav0/imu0").mkdir(parents=True, exist_ok=True)
 pathlib.Path("oakd_lite/mav0/cam0/data").mkdir(parents=True, exist_ok=True)
@@ -59,6 +78,9 @@ imu.out.link(xout_imu.input)
 monoLeft.out.link(xoutLeft.input)
 monoRight.out.link(xoutRight.input)
 
+t_png = threading.Thread(target=save_png)
+t_png.start()
+
 # Pipeline is defined, now we can connect to the device
 with dai.Device(pipeline) as device, open('oakd_lite/mav0/imu0/data.csv', 'w') as imu_file, open('oakd_lite/mav0/cam0/data.csv', 'w') as cam0_file, open('oakd_lite/mav0/cam1/data.csv', 'w') as cam1_file:
     print("start")
@@ -66,7 +88,7 @@ with dai.Device(pipeline) as device, open('oakd_lite/mav0/imu0/data.csv', 'w') a
     cam0_writer = csv.writer(cam0_file)
     cam1_writer = csv.writer(cam1_file)
     # Output queue for imu bulk packets
-    imuQueue = device.getOutputQueue(name="imu", maxSize=50, blocking=False)
+    imuQueue = device.getOutputQueue(name="imu", maxSize=200, blocking=False)
     qLeft = device.getOutputQueue(name="left", maxSize=4, blocking=False)
     qRight = device.getOutputQueue(name="right", maxSize=4, blocking=False)
     try:
@@ -84,15 +106,17 @@ with dai.Device(pipeline) as device, open('oakd_lite/mav0/imu0/data.csv', 'w') a
                     imu_writer.writerow((int(acceleroValues.getTimestampDevice().total_seconds()*1e9), gyro_cali[0, 0], -gyro_cali[1, 0], -gyro_cali[2, 0], acc_cali[0, 0], -acc_cali[1, 0], -acc_cali[2, 0]))
             elif queueName == "left":
                 inLeft = qLeft.get()
-                ts = int(inLeft.getTimestampDevice().total_seconds()*1e9)
-                cv2.imwrite(f"oakd_lite/mav0/cam0/data/{ts}.png", inLeft.getFrame())
-                cam0_writer.writerow((ts, f"{ts}.png"))
+                l_ts = int(inLeft.getTimestampDevice().total_seconds()*1e9)
+                l_img = inLeft.getFrame()
+                cam0_writer.writerow((l_ts, f"{l_ts}.png"))
             elif queueName == "right":
                 inRight = qRight.get()
-                ts = int(inRight.getTimestampDevice().total_seconds()*1e9)
-                cv2.imwrite(f"oakd_lite/mav0/cam1/data/{ts}.png", inRight.getFrame())
-                cam1_writer.writerow((ts, f"{ts}.png"))
+                r_ts = int(inRight.getTimestampDevice().total_seconds()*1e9)
+                r_img = inRight.getFrame()
+                cam1_writer.writerow((r_ts, f"{r_ts}.png"))
     except KeyboardInterrupt:
         print("ctrl_c")
+gogogo = False
+t_png.join()
 print("bye")
 
