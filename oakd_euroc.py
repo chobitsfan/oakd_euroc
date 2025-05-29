@@ -34,11 +34,11 @@ pathlib.Path("oakd_lite/mav0/cam1/data").mkdir(parents=True, exist_ok=True)
 fs = cv2.FileStorage("q250_imu_cali.yml", cv2.FILE_STORAGE_READ)
 acc_misalign = fs.getNode("acc_misalign").mat()
 acc_scale = fs.getNode("acc_scale").mat()
-acc_cor = acc_misalign * acc_scale
+acc_cor = acc_misalign @ acc_scale
 acc_bias = fs.getNode("acc_bias").mat()
 gyro_misalign = fs.getNode("gyro_misalign").mat()
 gyro_scale = fs.getNode("gyro_scale").mat()
-gyro_cor = acc_misalign * acc_scale
+gyro_cor = acc_misalign @ acc_scale
 gyro_bias = fs.getNode("gyro_bias").mat()
 fs.release()
 
