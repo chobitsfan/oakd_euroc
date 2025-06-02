@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     imu_yml["gyro_misalign"] >> gyro_mis_align;
     imu_yml["gyro_scale"] >> gyro_scale;
     imu_yml["gyro_bias"] >> gyro_bias;
-    cv::Mat gyro_cor = acc_mis_align * acc_scale;
+    cv::Mat gyro_cor = gyro_mis_align * gyro_scale;
     imu_yml.release();
 
     // Create pipeline
