@@ -38,7 +38,7 @@ acc_cor = acc_misalign @ acc_scale
 acc_bias = fs.getNode("acc_bias").mat()
 gyro_misalign = fs.getNode("gyro_misalign").mat()
 gyro_scale = fs.getNode("gyro_scale").mat()
-gyro_cor = acc_misalign @ acc_scale
+gyro_cor = gyro_misalign @ gyro_scale
 gyro_bias = fs.getNode("gyro_bias").mat()
 fs.release()
 
