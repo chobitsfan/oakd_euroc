@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
                 cv::Mat gyro_raw = (cv::Mat_<double>(3,1) << gyro.x, gyro.y, gyro.z);
                 cv::Mat1d gyro_cali = gyro_cor * (gyro_raw - gyro_bias);
                 auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(acc.getTimestampDevice().time_since_epoch()).count();
-                imu_file << ns << "," << gyro_cali(0,0) << "," << -gyro_cali(1,0) << "," << -gyro_cali(2,0) << "," << acc_cali(0,0) << "," << -acc_cali(1,0) << "," << -acc_cali(2,0) << "\n";
+                imu_file << ns << "," << gyro_cali(0,0) << "," << gyro_cali(1,0) << "," << gyro_cali(2,0) << "," << acc_cali(0,0) << "," << acc_cali(1,0) << "," << acc_cali(2,0) << "\n";
             }
         }
     }
